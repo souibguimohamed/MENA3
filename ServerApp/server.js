@@ -63,16 +63,29 @@ app.post('/inscription', function(req, res) {
         (addr === 'undefined' || typeof(addr) !== string)) {
         let error = { message: "Re-Check Informations" };
         res.end(JSON.stringify(error)); // to be solved
-        console.log("done")
+        console.log("done");
     }
     //test unique username
+    var user = new User({
+        username: req.body.username
+    });
 
-    //insert to database
+    user.save(function(err) {
+        if (err) {
+            if (err.name === 'MongoError' && err.code === 11000) {
+                // Duplicate username
+                return res.status(500).send({ succes: false, message: 'User already exist!' });
+            }
 
-    //test username in database
+            // Some other error
+            return res.status(500).send(err);
+        }
 
-    // return the result
-    res.status(200).send(true).end();
+        res.json({
+            success: true
+        });
+
+    });
 });
 /*  POST: localhost:3000/question
     oui : 1 / non : 0
@@ -83,12 +96,47 @@ app.post('/inscription', function(req, res) {
         return true/false
 */
 //----------------------------------
+// les scores
+let scores = [5, 2, 4, 5, 6, 5, 5, 7];
 app.post('/question', (req, res) => {
-    // test 3al tabQ lezem lkolhom ya 0 ya 1
+    let final = 0;
+    // test 3al tabQ lezem lkolhom ya 0 ya 1 [1,0,1,0,1,0]
+    req.body.questiontab.map((element, index) => {
+        final += element * scores[index];
+    });
+    // save to database
     // evaluation des reponses
-    //return true / false
+    if (final < 50) {
+        return false;
+    } else {
+        return true;
+    }
 });
+// =>>>> this part is optional
+// request for one question
+// params {id:number,value:0/1}
+// return true / false
+app.post('/Q', (req, res) => {
+    let { id, value } = req.body;
+    let res = value * scores[id];
+    //save to database
+});
+// when we submit the survey
+app.post('/lastQ', (req, res) => {
+    let { id, value } = req.body;
+    let res = value * scores[id];
+    //save to database
 
+    // calculate the final score
+
+    // save to database
+    // evaluation des reponses
+    if (final < 50) {
+        return false;
+    } else {
+        return true;
+    }
+});
 
 app.listen(3000, function() {
     console.log('Example app listening on port 3000!')
